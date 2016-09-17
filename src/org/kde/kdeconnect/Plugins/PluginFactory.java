@@ -26,25 +26,23 @@ import android.util.Log;
 
 import org.kde.kdeconnect.Device;
 import org.kde.kdeconnect.Plugins.BatteryPlugin.BatteryPlugin;
+import org.kde.kdeconnect.Plugins.ClibpoardPlugin.ClipboardPlugin;
 import org.kde.kdeconnect.Plugins.FindMyPhonePlugin.FindMyPhonePlugin;
 import org.kde.kdeconnect.Plugins.MousePadPlugin.MousePadPlugin;
-import org.kde.kdeconnect.Plugins.RunCommandPlugin.RunCommandPlugin;
-import org.kde.kdeconnect.Plugins.SftpPlugin.SftpPlugin;
-import org.kde.kdeconnect.Plugins.ClibpoardPlugin.ClipboardPlugin;
 import org.kde.kdeconnect.Plugins.MprisPlugin.MprisPlugin;
 import org.kde.kdeconnect.Plugins.NotificationsPlugin.NotificationsPlugin;
 import org.kde.kdeconnect.Plugins.PingPlugin.PingPlugin;
+import org.kde.kdeconnect.Plugins.ReceiveNotificationsPlugin.ReceiveNotificationsPlugin;
+import org.kde.kdeconnect.Plugins.RunCommandPlugin.RunCommandPlugin;
+import org.kde.kdeconnect.Plugins.SftpPlugin.SftpPlugin;
 import org.kde.kdeconnect.Plugins.SharePlugin.SharePlugin;
-import org.kde.kdeconnect.Plugins.TelepathyPlugin.TelepathyPlugin;
 import org.kde.kdeconnect.Plugins.TelephonyPlugin.TelephonyPlugin;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.lang.reflect.Method;
 
 public class PluginFactory {
 
@@ -109,7 +107,7 @@ public class PluginFactory {
     }
 
     private static final Map<String, Class> availablePlugins = new TreeMap<>();
-    private static final Map<String, PluginInfo> availablePluginsInfo = new TreeMap<>();
+    private static final Map<String, PluginInfo> pluginInfoCache = new TreeMap<>();
 
     static {
         //TODO: Use reflection to find all subclasses of Plugin, instead of adding them manually
@@ -120,16 +118,17 @@ public class PluginFactory {
         PluginFactory.registerPlugin(BatteryPlugin.class);
         PluginFactory.registerPlugin(SftpPlugin.class);
         PluginFactory.registerPlugin(NotificationsPlugin.class);
+        PluginFactory.registerPlugin(ReceiveNotificationsPlugin.class);
         PluginFactory.registerPlugin(MousePadPlugin.class);
         PluginFactory.registerPlugin(SharePlugin.class);
-        PluginFactory.registerPlugin(TelepathyPlugin.class);
+        //PluginFactory.registerPlugin(TelepathyPlugin.class);
         PluginFactory.registerPlugin(FindMyPhonePlugin.class);
         PluginFactory.registerPlugin(RunCommandPlugin.class);
     }
 
     public static PluginInfo getPluginInfo(Context context, String pluginKey) {
 
-        PluginInfo info = availablePluginsInfo.get(pluginKey); //Is it cached?
+        PluginInfo info = pluginInfoCache.get(pluginKey); //Is it cached?
         if (info != null) {
             return info;
         }
@@ -140,7 +139,7 @@ public class PluginFactory {
             info = new PluginInfo(p.getDisplayName(), p.getDescription(), p.getIcon(),
                     p.isEnabledByDefault(), p.hasSettings(), p.listensToUnpairedDevices(),
                     p.getSupportedPackageTypes(), p.getOutgoingPackageTypes());
-            availablePluginsInfo.put(pluginKey, info); //Cache it
+            pluginInfoCache.put(pluginKey, info); //Cache it
             return info;
         } catch(Exception e) {
             Log.e("PluginFactory","getPluginInfo exception");
@@ -181,6 +180,41 @@ public class PluginFactory {
             Log.e("PluginFactory","addPlugin exception");
             e.printStackTrace();
         }
+    }
+
+
+    public static Set<String> getIncomingCapabilities(Context context) {
+        HashSet<String> capabilities = new HashSet<>();
+        for (String pluginId : availablePlugins.keySet()) {
+            PluginInfo plugin = getPluginInfo(context, pluginId);
+            capabilities.addAll(plugin.getSupportedPackageTypes());
+        }
+
+        return capabilities;
+    }
+
+    public static Set<String> getOutgoingCapabilities(Context context) {
+        HashSet<String> capabilities = new HashSet<>();
+        for (String pluginId : availablePlugins.keySet()) {
+            PluginInfo plugin = getPluginInfo(context, pluginId);
+            capabilities.addAll(plugin.getOutgoingPackageTypes());
+        }
+        return capabilities;
+    }
+
+    public static Set<String> pluginsForCapabilities(Context context, Set<String> incoming, Set<String> outgoing) {
+        HashSet<String> plugins = new HashSet<>();
+        for (String pluginId : availablePlugins.keySet()) {
+            PluginInfo plugin = getPluginInfo(context, pluginId);
+            //Check incoming against outgoing
+            if (Collections.disjoint(outgoing, plugin.getSupportedPackageTypes())
+                && Collections.disjoint(incoming, plugin.getOutgoingPackageTypes())) {
+                Log.i("PluginFactory", "Won't load " + pluginId + " because of unmatched capabilities");
+                continue; //No capabilities in common, do not load this plugin
+            }
+            plugins.add(pluginId);
+        }
+        return plugins;
     }
 
 }

@@ -6,19 +6,21 @@
     <string name="pref_plugin_battery">Battery report</string>
     <string name="pref_plugin_battery_desc">Periodically report battery status</string>
     <string name="pref_plugin_sftp">Filesystem expose</string>
-    <string name="pref_plugin_sftp_desc">Allows to browse the phone\'s filesystem remotely</string>
+    <string name="pref_plugin_sftp_desc">Allows to browse this device\'s filesystem remotely</string>
     <string name="pref_plugin_clipboard">Clipboard sync</string>
     <string name="pref_plugin_clipboard_desc">Share the clipboard content</string>
     <string name="pref_plugin_mousepad">Remote input</string>
-    <string name="pref_plugin_mousepad_desc">Use your phone as a mouse and keyboard</string>
+    <string name="pref_plugin_mousepad_desc">Use your phone or tablet as a touchpad and keyboard</string>
     <string name="pref_plugin_mpris">Multimedia controls</string>
-    <string name="pref_plugin_mpris_desc">Control audio/video from your phone</string>
+    <string name="pref_plugin_mpris_desc">Provides a remote control for your media player</string>
     <string name="pref_plugin_runcommand">Run Command</string>
-    <string name="pref_plugin_runcommand_desc">Runs a command on your system</string>
+    <string name="pref_plugin_runcommand_desc">Trigger remote commands from your phone or tablet</string>
     <string name="pref_plugin_ping">Ping</string>
     <string name="pref_plugin_ping_desc">Send and receive pings</string>
     <string name="pref_plugin_notifications">Notification sync</string>
     <string name="pref_plugin_notifications_desc">Access your notifications from other devices</string>
+    <string name="pref_plugin_receive_notifications">Receive notifications</string>
+    <string name="pref_plugin_receive_notifications_desc">Receive notifications from the other device and display them on Android</string>
     <string name="pref_plugin_sharereceiver">Share and receive</string>
     <string name="pref_plugin_sharereceiver_desc">Share files and URLs between devices</string>
     <string name="plugin_not_available">This feature is not available in your Android version</string>
@@ -33,8 +35,12 @@
     <string name="mousepad_info">Move a finger on the screen to move the mouse cursor. Tap for a click, and use two/three fingers for right and middle buttons. Use a long press to drag\'n drop.</string>
     <string name="mousepad_double_tap_settings_title">Set two finger tap action</string>
     <string name="mousepad_triple_tap_settings_title">Set three finger tap action</string>
+    <string name="mousepad_sensitivity_settings_title">Set touchpad sensitivity</string>
     <string name="mousepad_double_tap_key" translatable="false">mousepad_double_tap_key</string>
     <string name="mousepad_triple_tap_key" translatable="false">mousepad_triple_tap_key</string>
+    <string name="mousepad_sensitivity_key" translatable="false">mousepad_sensitivity_key</string>
+    <string name="mousepad_scroll_direction_title">Reverse Scrolling Direction</string>
+    <string name="mousepad_scroll_direction" translatable="false">mousepad_scroll_direction</string>
     <string-array name="mousepad_tap_entries">
         <item>Right click</item>
         <item>Middle click</item>
@@ -42,10 +48,25 @@
     </string-array>
     <string name="mousepad_double_default">right</string>
     <string name="mousepad_triple_default">middle</string>
+    <string name="mousepad_sensitivity_default">default</string>
     <string-array name="mousepad_tap_values" translatable="false">
         <item>right</item>
         <item>middle</item>
         <item>none</item>
+    </string-array>
+    <string-array name="mousepad_sensitivity_entries">
+        <item>Slowest</item>
+        <item>Above Slowest</item>
+        <item>Default</item>
+        <item>Above Default</item>
+        <item>Fastest</item>
+    </string-array>
+    <string-array name="mousepad_sensitivity_values" translatable="false">
+        <item>slowest</item>
+        <item>aboveSlowest</item>
+        <item>default</item>
+        <item>aboveDefault</item>
+        <item>fastest</item>
     </string-array>
     <string name="category_connected_devices">Connected devices</string>
     <string name="category_not_paired_devices">Available devices</string>
@@ -54,6 +75,7 @@
     <string name="device_menu_plugins">Plugin settings</string>
     <string name="device_menu_unpair">Unpair</string>
     <string name="device_not_reachable">Paired device not reachable</string>
+    <string name="pair_new_device">Pair new device</string>
     <string name="unknown_device">Unknown device</string>
     <string name="error_not_reachable">Device not reachable</string>
     <string name="error_already_requested">Pairing already requested</string>
@@ -63,6 +85,10 @@
     <string name="error_canceled_by_user">Canceled by user</string>
     <string name="error_canceled_by_other_peer">Canceled by other peer</string>
     <string name="error_invalid_key">Invalid key received</string>
+    <string name="encryption_info_title">Encryption Info</string>
+    <string name="encryption_info_msg_no_ssl">The other device doesn\'t use a recent version of KDE Connect, using the legacy encryption method.</string>
+    <string name="my_device_fingerprint">SHA1 fingerprint of your device certificate is:</string>
+    <string name="remote_device_fingerprint">SHA1 fingerprint of remote device certificate is:</string>
     <string name="pair_requested">Pair requested</string>
     <string name="pairing_request_from">Pairing request from %1s</string>
     <string name="received_url_title">Received link from %1s</string>
@@ -158,8 +184,9 @@
     <string name="pref_plugin_telepathy">Send SMS</string>
     <string name="pref_plugin_telepathy_desc">Send text messages from your desktop</string>
     <string name="plugin_not_supported">This plugin is not supported by the device</string>
-    <string name="findmyphone_title">Find My Phone</string>
-    <string name="findmyphone_description">Rings this phone so you can find it.</string>
+    <string name="findmyphone_title">Find my phone</string>
+    <string name="findmyphone_title_tablet">Find my tablet</string>
+    <string name="findmyphone_description">Rings this device so you can find it</string>
     <string name="findmyphone_found">Found</string>
 
     <string name="open">Open</string>

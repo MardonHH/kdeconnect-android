@@ -7,9 +7,9 @@
     android:layout_height="match_parent"
     android:id="@+id/mpris_control_view"
     android:gravity="center"
-    android:paddingLeft="60dip"
+    android:paddingLeft="30dip"
     android:paddingTop="5dip"
-    android:paddingRight="60dip"
+    android:paddingRight="30dip"
     android:paddingBottom="5dip">
 
     <TextView
@@ -19,6 +19,11 @@
         android:text="@string/no_players_connected"
         android:id="@+id/no_players"
         android:layout_gravity="center_horizontal" />
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/artImageView" />
 
     <Spinner
         android:layout_width="match_parent"
@@ -32,6 +37,9 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/now_playing_textview"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:scrollHorizontally="true"
         android:singleLine="true"
         android:gravity="center"
         android:padding="8dip"
@@ -148,7 +156,6 @@
             android:layout_marginEnd="10dip"
             android:id="@+id/imageView"
             android:layout_weight="0"
-            android:layout_gravity="left|center_vertical"
             android:contentDescription="@string/mpris_volume"
             android:src="@drawable/ic_volume"
         />

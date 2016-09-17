@@ -5,12 +5,11 @@
   <string name="pref_plugin_battery">Akkubericht</string>
   <string name="pref_plugin_battery_desc">Akkustatus periodisch berichten</string>
   <string name="pref_plugin_sftp">Dateisystem zeigen</string>
-  <string name="pref_plugin_sftp_desc">Erlaubt das Browsen des Dateisystems auf dem entfernten Handy</string>
+  <string name="pref_plugin_sftp_desc">Erlaubt das Browsen des Dateisystems auf diesem Gerät aus der Ferne</string>
   <string name="pref_plugin_clipboard">Abgleich der Zwischenablage</string>
   <string name="pref_plugin_clipboard_desc">Inhalt der Zwischenablage freigeben</string>
-  <string name="pref_plugin_mousepad_desc">Verwendet Ihr Handy als Maus und Tastatur</string>
+  <string name="pref_plugin_mousepad">Ferneingabe</string>
   <string name="pref_plugin_mpris">Multimedia-Bedienung</string>
-  <string name="pref_plugin_mpris_desc">Audio und Video mit Ihrem Telefon steuern</string>
   <string name="pref_plugin_runcommand">Befehl ausführen</string>
   <string name="pref_plugin_ping">Ping</string>
   <string name="pref_plugin_ping_desc">Senden und Empfangen von Pings</string>
@@ -26,6 +25,11 @@
   <string name="no_permissions">Sie müssen die Erlaubnis zum Zugriff auf Benachrichtigungen erteilen</string>
   <string name="send_ping">Ping senden</string>
   <string name="open_mpris_controls">Multimedia-Bedienung</string>
+  <string name="open_mousepad">Ferneingabe</string>
+  <string name="mousepad_double_tap_settings_title">Aktionsausführung bei Berührung mit zwei Fingern einstellen</string>
+  <string name="mousepad_triple_tap_settings_title">Aktionsausführung bei Berührung mit drei Fingern einstellen</string>
+  <string name="mousepad_sensitivity_settings_title">Empfindlichkeit des Touchpads einstellen</string>
+  <string name="mousepad_scroll_direction_title">Bildlaufrichtung umkehren</string>
   <string-array name="mousepad_tap_entries">
     <item>Rechtsklick</item>
     <item>Mittelklick</item>
@@ -33,6 +37,14 @@
   </string-array>
   <string name="mousepad_double_default">Rechts</string>
   <string name="mousepad_triple_default">Mitte</string>
+  <string name="mousepad_sensitivity_default">Standard</string>
+  <string-array name="mousepad_sensitivity_entries">
+    <item>Langsamste</item>
+    <item>Above Slowest</item>
+    <item>Standard</item>
+    <item>Above Default</item>
+    <item>Schnellste</item>
+  </string-array>
   <string name="category_connected_devices">Verbundene Geräte</string>
   <string name="category_not_paired_devices">Verfügbare Gerät</string>
   <string name="category_remembered_devices">Gemerkte Geräte</string>
@@ -40,6 +52,7 @@
   <string name="device_menu_plugins">Modul-Einstellungen</string>
   <string name="device_menu_unpair">Verbindung trennen</string>
   <string name="device_not_reachable">Das angegeben Gerät ist nicht erreichbar</string>
+  <string name="pair_new_device">Ein neues Gerät verbinden</string>
   <string name="unknown_device">Unbekanntes Gerät</string>
   <string name="error_not_reachable">Das Gerät ist nicht erreichbar</string>
   <string name="error_already_requested">Die Verbindung wurde bereits angefragt</string>
@@ -49,6 +62,9 @@
   <string name="error_canceled_by_user">Abbruch durch Benutzer</string>
   <string name="error_canceled_by_other_peer">Abbruch durch Gegenstelle</string>
   <string name="error_invalid_key">Ungültiger Schlüssel empfangen</string>
+  <string name="encryption_info_title">Verschlüsselungsinformationen</string>
+  <string name="my_device_fingerprint">Der SHA1-Fingerabdruck Ihres Gerätezertifikats lautet:</string>
+  <string name="remote_device_fingerprint">Der SHA1-Fingerabdruck des Gerätezertifikats der Gegenstelle lautet:</string>
   <string name="pair_requested">Verbindung angefordert</string>
   <string name="pairing_request_from">Verbindungsanfrage von %1s</string>
   <string name="received_url_title">Verknüpfung von %1s erhalten</string>
@@ -82,6 +98,7 @@
   <string name="mpris_next">Weiter</string>
   <string name="mpris_volume">Lautstärke</string>
   <string name="mpris_settings">Multimedia-Einstellungen</string>
+  <string name="mpris_time_settings_title">Knöpfe Vorwärts/Rückwärts</string>
   <string-array name="mpris_time_entries">
     <item>10 Sekunden</item>
     <item>20 Sekunden</item>
@@ -100,7 +117,10 @@
   <string name="invalid_device_name">Ungültiger Gerätename</string>
   <string name="shareplugin_text_saved">Text empfangen und in der Zwischenablage gespeichert</string>
   <string name="custom_devices_settings">Benutzerdefinierte Geräteliste</string>
+  <string name="pair_device_action">Ein neues Gerät verbinden</string>
+  <string name="unpair_device_action">Verbindung %s trennen</string>
   <string name="custom_device_list">Geräte nach IP hinzufügen</string>
+  <string name="share_notification_preference">Ausführliche Benachrichtigungen</string>
   <string name="share_notification_preference_summary">Beim Empfang einer Datei vibrieren und einen Sound abspielen</string>
   <string name="title_activity_notification_filter">Benachrichtigungs-Filter</string>
   <string name="filter_apps_info">Benachrichtigungen werden zwischen den ausgewählten Anwendungen abgeglichen.</string>
@@ -114,4 +134,19 @@
   <string name="add_host_hint">Rechnername oder IP</string>
   <string name="no_players_connected">Keine Medienspieler gefunden</string>
   <string name="mpris_player_on_device">%1$s auf %2$s</string>
+  <string name="send_files">Dateien senden</string>
+  <string name="pairing_title">KDE-Connect-Geräte</string>
+  <string name="pairing_description">Andere Geräte, auf denen KDE-Connect läuft im gleichen Netzwerk,sollte hier angezeigt werden.</string>
+  <string name="device_paired">Gerät verbunden</string>
+  <string name="device_rename_title">Geräte umbenennen</string>
+  <string name="device_rename_confirm">Umbenennen</string>
+  <string name="refresh">Aktualisieren</string>
+  <string name="no_file_browser">Es sind keine Dateiverwaltungsprogramme installiert.</string>
+  <string name="pref_plugin_telepathy">SMS senden</string>
+  <string name="pref_plugin_telepathy_desc">Text-Nachrichten von Ihrer Arbeitsfläche senden</string>
+  <string name="plugin_not_supported">Dieses Modul wird durch das Gerät nicht unterstützt</string>
+  <string name="findmyphone_title">Mein Telefon suchen</string>
+  <string name="findmyphone_found">Gefunden</string>
+  <string name="open">Öffnen</string>
+  <string name="close">Schließen</string>
 </resources>

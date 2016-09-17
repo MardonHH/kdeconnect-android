@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -37,8 +36,8 @@ import android.widget.TextView;
 
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.Device;
-import org.kde.kdeconnect.UserInterface.List.PairingDeviceItem;
 import org.kde.kdeconnect.UserInterface.List.ListAdapter;
+import org.kde.kdeconnect.UserInterface.List.PairingDeviceItem;
 import org.kde.kdeconnect.UserInterface.List.SectionItem;
 import org.kde.kdeconnect_tp.R;
 
@@ -214,6 +213,7 @@ public class PairingFragment extends Fragment implements PairingDeviceItem.Callb
                     String deviceId = data.getStringExtra("deviceId");
                     mActivity.onDeviceSelected(deviceId);
                 }
+                break;
             default:
                 super.onActivityResult(requestCode, resultCode, data);
         }

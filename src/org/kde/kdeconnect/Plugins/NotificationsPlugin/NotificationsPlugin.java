@@ -34,13 +34,17 @@ import android.util.Log;
 
 import org.kde.kdeconnect.Helpers.AppsHelper;
 import org.kde.kdeconnect.NetworkPackage;
-import org.kde.kdeconnect.UserInterface.MaterialActivity;
 import org.kde.kdeconnect.Plugins.Plugin;
+import org.kde.kdeconnect.UserInterface.MaterialActivity;
 import org.kde.kdeconnect.UserInterface.SettingsActivity;
 import org.kde.kdeconnect_tp.R;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
 public class NotificationsPlugin extends Plugin implements NotificationReceiver.NotificationListener {
+
+    public final static String PACKAGE_TYPE_NOTIFICATION = "kdeconnect.notification";
+    public final static String PACKAGE_TYPE_NOTIFICATION_REQUEST = "kdeconnect.notification.request";
+
 /*
     private boolean sendIcons = false;
 */
@@ -77,54 +81,47 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
 
     @Override
     public boolean onCreate() {
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            return false;
-        }
-
-        if (hasPermission()) {
-            NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
-                @Override
-                public void onServiceStart(NotificationReceiver service) {
-                    try {
-                        service.addListener(NotificationsPlugin.this);
-                        StatusBarNotification[] notifications = service.getActiveNotifications();
-                        for (StatusBarNotification notification : notifications) {
-                            sendNotification(notification, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            if (hasPermission()) {
+                NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
+                    @Override
+                    public void onServiceStart(NotificationReceiver service) {
+                        try {
+                            service.addListener(NotificationsPlugin.this);
+                            StatusBarNotification[] notifications = service.getActiveNotifications();
+                            for (StatusBarNotification notification : notifications) {
+                                sendNotification(notification, true);
+                            }
+                        } catch (Exception e) {
+                            Log.e("NotificationsPlugin", "Exception");
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        Log.e("NotificationsPlugin", "Exception");
-                        e.printStackTrace();
                     }
-                }
-            });
-            return true;
-        } else {
-            return false;
+                });
+            } else {
+                return false;
+            }
         }
-
+        return true;
     }
 
     @Override
     public void onDestroy() {
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            return;
-        }
-
-        NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
-            @Override
-            public void onServiceStart(NotificationReceiver service) {
-                service.removeListener(NotificationsPlugin.this);
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+            NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
+                @Override
+                public void onServiceStart(NotificationReceiver service) {
+                    service.removeListener(NotificationsPlugin.this);
+                }
+            });
     }
 
 
     @Override
     public void onNotificationRemoved(StatusBarNotification statusBarNotification) {
         String id = getNotificationKeyCompat(statusBarNotification);
-        NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_NOTIFICATION);
+        NetworkPackage np = new NetworkPackage(PACKAGE_TYPE_NOTIFICATION);
         np.set("id", id);
         np.set("isCancel", true);
         device.sendPackage(np);
@@ -166,12 +163,19 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
             return;
         }
 
+        if ("com.android.systemui".equals(packageName) &&
+                "low_battery".equals(statusBarNotification.getTag()))
+        {
+            //HACK: Android low battery notification are posted again every few seconds. Ignore them, as we already have a battery indicator.
+            return;
+        }
+
         if (packageName.equals("com.google.android.googlequicksearchbox")) {
             //HACK: Hide Google Now notifications that keep constantly popping up (and without text because we don't know how to read them properly)
             return;
         }
 
-        NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_NOTIFICATION);
+        NetworkPackage np = new NetworkPackage(PACKAGE_TYPE_NOTIFICATION);
 
         if (packageName.equals("org.kde.kdeconnect_tp"))
         {
@@ -254,7 +258,6 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
 
     @Override
     public boolean onPackageReceived(final NetworkPackage np) {
-        if (!np.getType().equals(NetworkPackage.PACKAGE_TYPE_NOTIFICATION)) return false;
 /*
         if (np.getBoolean("sendIcons")) {
             sendIcons = true;
@@ -262,52 +265,50 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
 */
         if (np.getBoolean("request")) {
 
-            NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
-                private void sendCurrentNotifications(NotificationReceiver service) {
-                    StatusBarNotification[] notifications = service.getActiveNotifications();
-                    for (StatusBarNotification notification : notifications) {
-                        sendNotification(notification, true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+                NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
+                    private void sendCurrentNotifications(NotificationReceiver service) {
+                        StatusBarNotification[] notifications = service.getActiveNotifications();
+                        for (StatusBarNotification notification : notifications) {
+                            sendNotification(notification, true);
+                        }
                     }
-                }
 
 
-                @Override
-                public void onServiceStart(final NotificationReceiver service) {
-                    try {
-                        //If service just started, this call will throw an exception because the answer is not ready yet
-                        sendCurrentNotifications(service);
-                    } catch(Exception e) {
-                        Log.e("onPackageReceived","Error when answering 'request': Service failed to start. Retrying in 100ms...");
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    Thread.sleep(100);
-                                    Log.e("onPackageReceived","Error when answering 'request': Service failed to start. Retrying...");
-                                    sendCurrentNotifications(service);
-                                } catch (Exception e) {
-                                    Log.e("onPackageReceived","Error when answering 'request': Service failed to start twice!");
-                                    e.printStackTrace();
+                    @Override
+                    public void onServiceStart(final NotificationReceiver service) {
+                        try {
+                            //If service just started, this call will throw an exception because the answer is not ready yet
+                            sendCurrentNotifications(service);
+                        } catch(Exception e) {
+                            Log.e("onPackageReceived","Error when answering 'request': Service failed to start. Retrying in 100ms...");
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Thread.sleep(100);
+                                        Log.e("onPackageReceived","Error when answering 'request': Service failed to start. Retrying...");
+                                        sendCurrentNotifications(service);
+                                    } catch (Exception e) {
+                                        Log.e("onPackageReceived","Error when answering 'request': Service failed to start twice!");
+                                        e.printStackTrace();
+                                    }
                                 }
-                            }
-                        }).start();
+                            }).start();
+                        }
                     }
-                }
-            });
+                });
 
         } else if (np.has("cancel")) {
 
-            NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
-                @Override
-                public void onServiceStart(NotificationReceiver service) {
-                    String dismissedId = np.getString("cancel");
-                    cancelNotificationCompat(service, dismissedId);
-                }
-            });
-
-        } else {
-
-            Log.w("NotificationsPlugin", "Nothing to do");
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
+                NotificationReceiver.RunCommand(context, new NotificationReceiver.InstanceCallback() {
+                    @Override
+                    public void onServiceStart(NotificationReceiver service) {
+                        String dismissedId = np.getString("cancel");
+                        cancelNotificationCompat(service, dismissedId);
+                    }
+                });
 
         }
 
@@ -352,12 +353,12 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
 
     @Override
     public String[] getSupportedPackageTypes() {
-        return new String[]{NetworkPackage.PACKAGE_TYPE_NOTIFICATION};
+        return new String[]{PACKAGE_TYPE_NOTIFICATION_REQUEST};
     }
 
     @Override
     public String[] getOutgoingPackageTypes() {
-        return new String[]{NetworkPackage.PACKAGE_TYPE_NOTIFICATION};
+        return new String[]{PACKAGE_TYPE_NOTIFICATION};
     }
 
     //For compat with API<21, because lollipop changed the way to cancel notifications
@@ -366,6 +367,10 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
             service.cancelNotification(compatKey);
         } else {
             int first = compatKey.indexOf(':');
+            if (first == -1) {
+                Log.e("cancelNotificationCompa","Not formated like a notification key: "+ compatKey);
+                return;
+            }
             int last = compatKey.lastIndexOf(':');
             String packageName = compatKey.substring(0, first);
             String tag = compatKey.substring(first + 1, last);
@@ -382,16 +387,20 @@ public class NotificationsPlugin extends Plugin implements NotificationReceiver.
     }
 
     public static String getNotificationKeyCompat(StatusBarNotification statusBarNotification) {
-        if (Build.VERSION.SDK_INT >= 21) {
-            return statusBarNotification.getKey();
+        String result;
+        // first check if it's one of our remoteIds
+        String tag = statusBarNotification.getTag();
+        if (tag != null && tag.startsWith("kdeconnectId:"))
+            result = Integer.toString(statusBarNotification.getId());
+        else if (Build.VERSION.SDK_INT >= 21) {
+            result = statusBarNotification.getKey();
         } else {
             String packageName = statusBarNotification.getPackageName();
-            String tag = statusBarNotification.getTag();
             int id = statusBarNotification.getId();
             String safePackageName = (packageName == null) ? "" : packageName;
             String safeTag = (tag == null) ? "" : tag;
-            return safePackageName + ":" + safeTag + ":" + id;
+            result = safePackageName + ":" + safeTag + ":" + id;
         }
+        return result;
     }
-
 }

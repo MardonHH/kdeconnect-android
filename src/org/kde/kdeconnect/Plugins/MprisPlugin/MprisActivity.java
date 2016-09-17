@@ -21,6 +21,7 @@
 package org.kde.kdeconnect.Plugins.MprisPlugin;
 
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -33,18 +34,19 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.kde.kdeconnect.Backends.BaseLink;
+import org.kde.kdeconnect.Backends.BaseLinkProvider;
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.Device;
-import org.kde.kdeconnect.Backends.BaseLinkProvider;
 import org.kde.kdeconnect.NetworkPackage;
 import org.kde.kdeconnect_tp.R;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class MprisActivity extends ActionBarActivity {
 
@@ -89,9 +91,20 @@ public class MprisActivity extends ActionBarActivity {
                             @Override
                             public void run() {
                                 String song = mpris.getCurrentSong();
-                                ((TextView) findViewById(R.id.now_playing_textview)).setText(song);
 
-                                if (mpris.getLength() > -1 && mpris.getPosition() > -1 && !"Spotify".equals(mpris.getPlayer())) {
+                                TextView nowPlaying = (TextView) findViewById(R.id.now_playing_textview);
+                                if (!nowPlaying.getText().toString().equals(song)) {
+                                    nowPlaying.setText(song);
+
+                                    Bitmap currentArt = mpris.getCurrentArt();
+                                    ImageView artView = (ImageView) findViewById(R.id.artImageView);
+                                    if (currentArt != null) {
+                                        artView.setImageBitmap(currentArt);
+                                    }
+
+                                }
+
+                                if (mpris.getLength() > -1 && mpris.getPosition() > -1 && !"spotify".equals(mpris.getPlayer().toLowerCase())) {
                                     ((TextView) findViewById(R.id.time_textview)).setText(milisToProgress(mpris.getLength()));
 
                                     SeekBar positionSeek = (SeekBar)findViewById(R.id.positionSeek);
@@ -120,7 +133,7 @@ public class MprisActivity extends ActionBarActivity {
                 mpris.setPlayerListUpdatedHandler("activity", new Handler() {
                     @Override
                     public void handleMessage(Message msg) {
-                        final ArrayList<String> playerList = mpris.getPlayerList();
+                        final List<String> playerList = mpris.getPlayerList();
                         final ArrayAdapter<String> adapter = new ArrayAdapter<>(MprisActivity.this,
                                 android.R.layout.simple_spinner_item,
                                 playerList.toArray(new String[playerList.size()])
@@ -154,7 +167,7 @@ public class MprisActivity extends ActionBarActivity {
                                         mpris.setPlayer(player);
                                         //Spotify doesn't support changing the volume yet...
                                         //Also doesn't support seeking and telling actual position...
-                                        if (player.equals("Spotify")) {
+                                        if (player.toLowerCase().equals("spotify")) {
                                             findViewById(R.id.volume_layout).setVisibility(View.INVISIBLE);
                                             findViewById(R.id.rew_button).setVisibility(View.GONE);
                                             findViewById(R.id.ff_button).setVisibility(View.GONE);
@@ -410,10 +423,13 @@ public class MprisActivity extends ActionBarActivity {
                     @Override
                     public void onServiceStart(BackgroundService service) {
                         Device device = service.getDevice(deviceId);
-                        MprisPlugin mpris = device.getPlugin(MprisPlugin.class);
-                        if (mpris != null) {
-                            positionSeek.setProgress((int) (mpris.getPosition()));
+                        if (device != null) {
+                            MprisPlugin mpris = device.getPlugin(MprisPlugin.class);
+                            if (mpris != null) {
+                                positionSeek.setProgress((int) (mpris.getPosition()));
+                            }
                         }
+                        positionSeekUpdateHandler.removeCallbacks(positionSeekUpdateRunnable);
                         positionSeekUpdateHandler.postDelayed(positionSeekUpdateRunnable, 1000);
                     }
                 });
@@ -450,6 +466,7 @@ public class MprisActivity extends ActionBarActivity {
 
         });
 
+        findViewById(R.id.now_playing_textview).setSelected(true);
     }
 
     @Override

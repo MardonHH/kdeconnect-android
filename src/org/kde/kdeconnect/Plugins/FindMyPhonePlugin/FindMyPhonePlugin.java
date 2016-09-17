@@ -1,12 +1,8 @@
 package org.kde.kdeconnect.Plugins.FindMyPhonePlugin;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.util.Log;
-import android.widget.Button;
 
+import org.kde.kdeconnect.Helpers.DeviceHelper;
 import org.kde.kdeconnect.NetworkPackage;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect_tp.R;
@@ -17,9 +13,13 @@ import org.kde.kdeconnect_tp.R;
  * and David Edmundson 2015
  */
 public class FindMyPhonePlugin extends Plugin {
+
+    public final static String PACKAGE_TYPE_FINDMYPHONE = "kdeconnect.findmyphone";
+    public final static String PACKAGE_TYPE_FINDMYPHONE_REQUEST = "kdeconnect.findmyphone.request";
+
     @Override
     public String getDisplayName() {
-        return context.getString(R.string.findmyphone_title);
+        return DeviceHelper.isTablet() ? context.getString(R.string.findmyphone_title_tablet) : context.getString(R.string.findmyphone_title);
     }
 
     @Override
@@ -29,22 +29,17 @@ public class FindMyPhonePlugin extends Plugin {
 
     @Override
     public boolean onPackageReceived(NetworkPackage np) {
-       Log.e("FindMyPhonePR", "onPackageReceived");
-        if (np.getType().equals(NetworkPackage.PACKAGE_TYPE_FINDMYPHONE)) {
-            //Log.e("PingPackageReceiver", "was a find my phone!");
 
-            Intent intent = new Intent(context,FindMyPhoneActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
-            return true;
+        Intent intent = new Intent(context,FindMyPhoneActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
+        return true;
 
-        }
-        return false;
     }
 
     @Override
     public String[] getSupportedPackageTypes() {
-        return new String[]{NetworkPackage.PACKAGE_TYPE_FINDMYPHONE};
+        return new String[]{PACKAGE_TYPE_FINDMYPHONE_REQUEST};
     }
 
     @Override

@@ -28,27 +28,29 @@ import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
-import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.Device;
 import org.kde.kdeconnect_tp.R;
 
 public class MousePadActivity extends ActionBarActivity implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener, MousePadGestureDetector.OnGestureListener {
-
     String deviceId;
 
-    private final static float MinDistanceToSendScroll = 2.5f;
+    private final static float MinDistanceToSendScroll = 2.5f; // touch gesture scroll
+    private final static float MinDistanceToSendGenericScroll = 0.1f; // real mouse scroll wheel event
 
     private float mPrevX;
     private float mPrevY;
     private float mCurrentX;
     private float mCurrentY;
+    private float mCurrentSensitivity;
+    private int scrollDirection = 1;
 
     boolean isScrolling = false;
     float accumulatedDistanceY = 0;
@@ -89,13 +91,41 @@ public class MousePadActivity extends ActionBarActivity implements GestureDetect
         keyListenerView.setDeviceId(deviceId);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        if (prefs.getBoolean(getString(R.string.mousepad_scroll_direction),false)) {
+            scrollDirection = -1;
+        } else {
+            scrollDirection = 1;
+        }
         String doubleTapSetting = prefs.getString(getString(R.string.mousepad_double_tap_key),
                 getString(R.string.mousepad_double_default));
         String tripleTapSetting = prefs.getString(getString(R.string.mousepad_triple_tap_key),
                 getString(R.string.mousepad_triple_default));
+        String sensitivitySetting = prefs.getString(getString(R.string.mousepad_sensitivity_key),
+                getString(R.string.mousepad_sensitivity_default));
 
         doubleTapAction = ClickType.fromString(doubleTapSetting);
         tripleTapAction = ClickType.fromString(tripleTapSetting);
+
+        switch (sensitivitySetting){
+            case "slowest":
+                mCurrentSensitivity = 0.2f;
+                break;
+            case "aboveSlowest":
+                mCurrentSensitivity = 0.5f;
+                break;
+            case "default":
+                mCurrentSensitivity = 1.0f;
+                break;
+            case "aboveDefault":
+                mCurrentSensitivity = 1.5f;
+                break;
+            case "fastest":
+                mCurrentSensitivity = 2.0f;
+                break;
+            default:
+                mCurrentSensitivity = 1.0f;
+                return;
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
             final View decorView = getWindow().getDecorView();
@@ -184,7 +214,7 @@ public class MousePadActivity extends ActionBarActivity implements GestureDetect
                         Device device = service.getDevice(deviceId);
                         MousePadPlugin mousePadPlugin = device.getPlugin(MousePadPlugin.class);
                         if (mousePadPlugin == null) return;
-                        mousePadPlugin.sendMouseDelta(mCurrentX - mPrevX, mCurrentY - mPrevY);
+                        mousePadPlugin.sendMouseDelta(mCurrentX - mPrevX, mCurrentY - mPrevY, mCurrentSensitivity);
                         mPrevX = mCurrentX;
                         mPrevY = mCurrentY;
                     }
@@ -210,6 +240,25 @@ public class MousePadActivity extends ActionBarActivity implements GestureDetect
     }
 
     @Override
+    public boolean onGenericMotionEvent(MotionEvent e)
+    {
+        if (android.os.Build.VERSION.SDK_INT >= 12) { // MotionEvent.getAxisValue is >= 12
+            if (e.getAction() == MotionEvent.ACTION_SCROLL) {
+                final float distanceY = e.getAxisValue(MotionEvent.AXIS_VSCROLL);
+
+                accumulatedDistanceY += distanceY;
+
+                if (accumulatedDistanceY > MinDistanceToSendGenericScroll || accumulatedDistanceY < -MinDistanceToSendGenericScroll) {
+                    sendScroll(accumulatedDistanceY);
+                    accumulatedDistanceY = 0;
+                }
+            }
+        }
+
+        return super.onGenericMotionEvent(e);
+    }
+
+    @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, final float distanceX, final float distanceY) {
         // If only one thumb is used then cancel the scroll gesture
         if (e2.getPointerCount() <= 1) {
@@ -221,17 +270,7 @@ public class MousePadActivity extends ActionBarActivity implements GestureDetect
         accumulatedDistanceY += distanceY;
         if (accumulatedDistanceY > MinDistanceToSendScroll || accumulatedDistanceY < -MinDistanceToSendScroll)
         {
-            final float scrollToSendY = accumulatedDistanceY;
-
-            BackgroundService.RunCommand(this, new BackgroundService.InstanceCallback() {
-                @Override
-                public void onServiceStart(BackgroundService service) {
-                    Device device = service.getDevice(deviceId);
-                    MousePadPlugin mousePadPlugin = device.getPlugin(MousePadPlugin.class);
-                    if (mousePadPlugin == null) return;
-                    mousePadPlugin.sendScroll(0, scrollToSendY);
-                }
-            });
+            sendScroll(scrollDirection * accumulatedDistanceY);
 
             accumulatedDistanceY = 0;
         }
@@ -345,17 +384,30 @@ public class MousePadActivity extends ActionBarActivity implements GestureDetect
             }
         });
     }
-        private void sendSingleHold() {
-            BackgroundService.RunCommand(this, new BackgroundService.InstanceCallback() {
-                @Override
-                public void onServiceStart(BackgroundService service) {
-                    Device device = service.getDevice(deviceId);
-                    MousePadPlugin mousePadPlugin = device.getPlugin(MousePadPlugin.class);
-                    if (mousePadPlugin == null) return;
-                    mousePadPlugin.sendSingleHold();
-                }
-            });
-        }
+
+    private void sendSingleHold() {
+        BackgroundService.RunCommand(this, new BackgroundService.InstanceCallback() {
+            @Override
+            public void onServiceStart(BackgroundService service) {
+                Device device = service.getDevice(deviceId);
+                MousePadPlugin mousePadPlugin = device.getPlugin(MousePadPlugin.class);
+                if (mousePadPlugin == null) return;
+                mousePadPlugin.sendSingleHold();
+            }
+        });
+    }
+
+    private void sendScroll(final float y) {
+        BackgroundService.RunCommand(this, new BackgroundService.InstanceCallback() {
+            @Override
+            public void onServiceStart(BackgroundService service) {
+                Device device = service.getDevice(deviceId);
+                MousePadPlugin mousePadPlugin = device.getPlugin(MousePadPlugin.class);
+                if (mousePadPlugin == null) return;
+                mousePadPlugin.sendScroll(0, y);
+            }
+        });
+    }
 
     private void showKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);

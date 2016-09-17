@@ -1,14 +1,11 @@
 package org.kde.kdeconnect.UserInterface;
 
-import android.graphics.Color;
 import android.preference.CheckBoxPreference;
 import android.view.View;
-import android.widget.TextView;
 
 import org.kde.kdeconnect.Device;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect.Plugins.PluginFactory;
-import org.kde.kdeconnect.UserInterface.SettingsActivity;
 import org.kde.kdeconnect_tp.R;
 
 public class PluginPreference extends CheckBoxPreference {
@@ -54,11 +51,7 @@ public class PluginPreference extends CheckBoxPreference {
         super.onBindView(root);
         final View button = root.findViewById(R.id.settingsButton);
 
-        if (device.getUnsupportedPlugins().contains(pluginKey)) {
-            ((TextView)root.findViewById(android.R.id.title)).setTextColor(Color.GRAY);
-            ((TextView)root.findViewById(android.R.id.summary)).setText(R.string.plugin_not_supported);
-            button.setVisibility(View.GONE);
-        } else if (listener == null) {
+        if (listener == null) {
             button.setVisibility(View.GONE);
         } else {
             button.setEnabled(isChecked());

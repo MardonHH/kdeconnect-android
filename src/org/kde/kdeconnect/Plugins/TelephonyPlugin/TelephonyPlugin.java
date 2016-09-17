@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
@@ -35,10 +36,14 @@ import org.kde.kdeconnect.NetworkPackage;
 import org.kde.kdeconnect.Plugins.Plugin;
 import org.kde.kdeconnect_tp.R;
 
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class TelephonyPlugin extends Plugin {
+
+    public final static String PACKAGE_TYPE_TELEPHONY = "kdeconnect.telephony";
+    public final static String PACKAGE_TYPE_TELEPHONY_REQUEST = "kdeconnect.telephony.request";
 
     private int lastState = TelephonyManager.CALL_STATE_IDLE;
     private NetworkPackage lastPackage = null;
@@ -97,17 +102,43 @@ public class TelephonyPlugin extends Plugin {
 
         //Log.e("TelephonyPlugin", "callBroadcastReceived");
 
-        NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_TELEPHONY);
+        Map<String, String> contactInfo = ContactsHelper.phoneNumberLookup(context, phoneNumber);
+        NetworkPackage np = new NetworkPackage(PACKAGE_TYPE_TELEPHONY);
+
         if (phoneNumber != null) {
             np.set("phoneNumber", phoneNumber);
-            np.set("contactName", ContactsHelper.phoneNumberLookup(context, phoneNumber));
+        }
+
+        if (contactInfo.containsKey("name")) {
+            np.set("contactName", contactInfo.get("name"));
+        } else {
+            np.set("contactName",  phoneNumber);
+        }
+
+        if (contactInfo.containsKey("photoID")) {
+            String photoUri = contactInfo.get("photoID");
+            if (photoUri != null) {
+                try {
+                    String base64photo = ContactsHelper.photoId64Encoded(context, photoUri);
+                    if (base64photo != null && !base64photo.isEmpty()) {
+                        np.set("phoneThumbnail", base64photo);
+                    }
+                } catch (Exception e) {
+                    Log.e("TelephonyPlugin", "Failed to get contact photo");
+                }
+            }
+
         }
 
         switch (state) {
             case TelephonyManager.CALL_STATE_RINGING:
                 if (isMuted) {
                     AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                    am.setStreamMute(AudioManager.STREAM_RING, false);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        am.setStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_UNMUTE, 0);
+                    } else {
+                        am.setStreamMute(AudioManager.STREAM_RING, false);
+                    }
                     isMuted = false;
                 }
                 np.set("event", "ringing");
@@ -134,7 +165,11 @@ public class TelephonyPlugin extends Plugin {
                             public void run() {
                                 if (isMuted) {
                                     AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                                    am.setStreamMute(AudioManager.STREAM_RING, false);
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                        am.setStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_UNMUTE, 0);
+                                    } else {
+                                        am.setStreamMute(AudioManager.STREAM_RING, false);
+                                    }
                                     isMuted = false;
                                 }
                             }
@@ -163,7 +198,7 @@ public class TelephonyPlugin extends Plugin {
 
         //Log.e("SmsBroadcastReceived", message.toString());
 
-        NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_TELEPHONY);
+        NetworkPackage np = new NetworkPackage(PACKAGE_TYPE_TELEPHONY);
 
         np.set("event","sms");
 
@@ -173,9 +208,17 @@ public class TelephonyPlugin extends Plugin {
         }
 
         String phoneNumber = message.getOriginatingAddress();
+        Map<String, String> contactInfo = ContactsHelper.phoneNumberLookup(context, phoneNumber);
         if (phoneNumber != null) {
             np.set("phoneNumber", phoneNumber);
-            np.set("contactName", ContactsHelper.phoneNumberLookup(context, phoneNumber));
+        }
+
+        if (contactInfo.containsKey("name")) {
+            np.set("contactName", contactInfo.get("name"));
+        }
+
+        if (contactInfo.containsKey("photoID")) {
+            np.set("phoneThumbnail", ContactsHelper.photoId64Encoded(context, contactInfo.get("photoID")));
         }
 
         device.sendPackage(np);
@@ -198,13 +241,14 @@ public class TelephonyPlugin extends Plugin {
 
     @Override
     public boolean onPackageReceived(NetworkPackage np) {
-        if (!np.getType().equals(NetworkPackage.PACKAGE_TYPE_TELEPHONY)) {
-            return false;
-        }
         if (np.getString("action").equals("mute")) {
             if (!isMuted) {
                 AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-                am.setStreamMute(AudioManager.STREAM_RING, true);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+                } else {
+                    am.setStreamMute(AudioManager.STREAM_RING, true);
+                }
                 isMuted = true;
             }
             //Log.e("TelephonyPlugin", "mute");
@@ -215,12 +259,12 @@ public class TelephonyPlugin extends Plugin {
 
     @Override
     public String[] getSupportedPackageTypes() {
-        return new String[]{NetworkPackage.PACKAGE_TYPE_TELEPHONY};
+        return new String[]{PACKAGE_TYPE_TELEPHONY_REQUEST};
     }
 
     @Override
     public String[] getOutgoingPackageTypes() {
-        return new String[]{NetworkPackage.PACKAGE_TYPE_TELEPHONY};
+        return new String[]{PACKAGE_TYPE_TELEPHONY};
     }
 
 }

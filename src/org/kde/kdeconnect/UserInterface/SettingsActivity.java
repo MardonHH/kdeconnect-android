@@ -22,14 +22,12 @@ package org.kde.kdeconnect.UserInterface;
 
 import android.os.Bundle;
 import android.preference.PreferenceScreen;
-import android.util.Log;
 import android.view.MenuItem;
 
 import org.kde.kdeconnect.BackgroundService;
 import org.kde.kdeconnect.Device;
-import org.kde.kdeconnect.Plugins.PluginFactory;
 
-import java.util.Set;
+import java.util.List;
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
@@ -50,7 +48,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             @Override
             public void onServiceStart(BackgroundService service) {
                 final Device device = service.getDevice(deviceId);
-                Set<String> plugins = PluginFactory.getAvailablePlugins();
+                if (device == null) {
+                    SettingsActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            SettingsActivity.this.finish();
+                        }
+                    });
+                    return;
+                }
+                List<String> plugins = device.getSupportedPlugins();
                 for (final String pluginKey : plugins) {
                     PluginPreference pref = new PluginPreference(SettingsActivity.this, pluginKey, device);
                     preferenceScreen.addPreference(pref);

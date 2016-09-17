@@ -101,7 +101,7 @@ public class KeyListenerView extends View  {
     }
 
     public void sendChars(CharSequence chars) {
-        final NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_MOUSEPAD);
+        final NetworkPackage np = new NetworkPackage(MousePadPlugin.PACKAGE_TYPE_MOUSEPAD_REQUEST);
         np.set("key", chars.toString());
         sendKeyPressPackage(np);
     }
@@ -121,16 +121,21 @@ public class KeyListenerView extends View  {
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
 
-    /* NOTE: Some keyboards, and specifically the Android default keyboard when
-     * entering non-ascii characters, will not trigger KeyEvent events as documented
-     * here: http://developer.android.com/reference/android/view/KeyEvent.html
-     */
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            //We don't want to swallow the back button press
+            return false;
+        }
+
+        // NOTE: Most keyboards, and specifically the Android default keyboard when
+        // entering non-ascii characters, will not trigger KeyEvent events as documented
+        // here: http://developer.android.com/reference/android/view/KeyEvent.html
+
         //Log.e("KeyDown", "------------");
         //Log.e("KeyDown", "keyChar:" + (int) event.getDisplayLabel());
         //Log.e("KeyDown", "utfChar:" + (char)event.getUnicodeChar());
         //Log.e("KeyDown", "intUtfChar:" + event.getUnicodeChar());
 
-        final NetworkPackage np = new NetworkPackage(NetworkPackage.PACKAGE_TYPE_MOUSEPAD);
+        final NetworkPackage np = new NetworkPackage(MousePadPlugin.PACKAGE_TYPE_MOUSEPAD_REQUEST);
 
         boolean modifier = false;
         if (event.isAltPressed()) {
@@ -159,10 +164,13 @@ public class KeyListenerView extends View  {
             char keyCharacter = event.getDisplayLabel();
             np.set("key", new String(new char[]{keyCharacter}).toLowerCase());
         } else {
-            return false;  //normal keys will be handled by KeyInputConnection
+            //A normal key, but still not handled by the KeyInputConnection (happens with numbers)
+            np.set("key", new String(new char[]{(char)event.getUnicodeChar()}));
         }
 
         sendKeyPressPackage(np);
         return true;
+
     }
+
 }
